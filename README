@@ -2,3 +2,6 @@ Pass a folder root to what.py and recieve a comma-separated list of artists cont
 
 Usage:
 python what.py E:/Music > output
+
+Requires ID3 module:
+http://id3-py.sourceforge.net/
