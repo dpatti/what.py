@@ -1,0 +1,4 @@
+Pass a folder root to what.py and recieve a comma-separated list of artists contained in ID3 tags on mp3s in that folder on stdout. This attempts to remove duplicates by checking for the longest common subsequence between the two artists after removing a possible "The " prefix. You may filter results by creating a .ignore file, in which you can add one artist per line.
+
+Usage:
+./python what.py E:/Music > output
