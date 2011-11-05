@@ -60,6 +60,12 @@ def stripThe(s):
 		return s[4:]
 	return s
 
+formatCache = {}
+def formatArtist(artist):
+	if not artist in formatCache:
+		formatCache[artist] = stripThe(artist.lower())
+	return formatCache[artist]
+
 artists = set()
 
 if len(sys.argv) < 2:
@@ -95,31 +101,49 @@ for root, _, files in os.walk(sys.argv[1]):
 #     'Starfucker', 'Sigur R\xf3s', 'Yoko Kanno', 'Weezer', 'The Antlers', 'Clap Your Hands Say Yeah'])
 		
 
+# load .ignore file
+ignore = set()
+try:
+	for line in open(".ignore"):
+		ignore.add(line[:-1])
+except IOError:
+	pass
+
+
 artists = sorted(list(artists), cmp=lambda x,y: cmp(x.lower(), y.lower()))
 
 artistMatch = [[None for i in range(len(artists))] for j in range(len(artists))]
 final = []
 for i in range(len(artists)):
-	# Compare to artist
-	for j in range(i+1, len(artists)):
-		# Method 1: String editing score ---------------------------------------------
-		# artistMatch[i][j] = str_dist(artists[i].lower(), artists[j].lower())
-		# if artistMatch[i][j] < DIFF_THRESH and artists[i].lower() != artists[j].lower():
-		# 	print artistMatch[i][j], artists[i], artists[j]
-		# Method 2: Common characters % ----------------------------------------------
-		# a, b = artists[i].lower(), artists[j].lower()
-		# if len(a) - len(b) <= 6:
-		# 	similars = sum([k for k in (Counter(a) & Counter(b)).values()])
-		# 	if similars * 100 / max(len(a), len(b)) > 70:
-		# 		print similars * 100 / max(len(a), len(b)), a, b
-		# Method 3: Longest common subsequence as a % --------------------------------
-		a, b = stripThe(artists[i].lower()), stripThe(artists[j].lower())
+	a = formatArtist(artists[i])
+	# Compare to ignores
+	for ign in ignore:
+		b = formatArtist(ign)
 		lcsPerc = longest_subseq(a, b) * 100 / max(len(a), len(b))
 		if lcsPerc > 70:
-			sys.stderr.write("\nDetected duplicate (%d%%): %s\n\
-                           %s\n" % (lcsPerc, artists[i], artists[j]))
+			sys.stderr.write("\n%-27s'%s'\n" % (("Skipping (%d%%):" % lcsPerc), artists[i]))
 			break
 	else:
-		final.append(artists[i])
+		# Compare to artist
+		for j in range(i+1, len(artists)):
+			# Method 1: String editing score ---------------------------------------------
+			# artistMatch[i][j] = str_dist(artists[i].lower(), artists[j].lower())
+			# if artistMatch[i][j] < DIFF_THRESH and artists[i].lower() != artists[j].lower():
+			# 	print artistMatch[i][j], artists[i], artists[j]
+			# Method 2: Common characters % ----------------------------------------------
+			# a, b = artists[i].lower(), artists[j].lower()
+			# if len(a) - len(b) <= 6:
+			# 	similars = sum([k for k in (Counter(a) & Counter(b)).values()])
+			# 	if similars * 100 / max(len(a), len(b)) > 70:
+			# 		print similars * 100 / max(len(a), len(b)), a, b
+			# Method 3: Longest common subsequence as a % --------------------------------
+			b = formatArtist(artists[j])
+			lcsPerc = longest_subseq(a, b) * 100 / max(len(a), len(b))
+			if lcsPerc > 70:
+				sys.stderr.write("\n%-27s'%s'\n" % (("Detected duplicate (%d%%):" % lcsPerc), artists[i]))
+				sys.stderr.write("%-27s'%s'\n" % ("", artists[j]))
+				break
+		else:
+			final.append(artists[i])
 
-print ",".join(final)
+print ", ".join(final)
